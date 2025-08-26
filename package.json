@@ -1,0 +1,25 @@
+{
+  "name": "study-site-backend",
+  "version": "1.0.0",
+  "description": "this is a backend for upload photos and make pdf from it",
+  "main": "index.js",
+  "scripts": {
+    "dev": "node src/index.js"
+  },
+  "keywords": [
+    "backend",
+    "nodejs",
+    "express",
+    "cloudinary",
+    "mongoose"
+  ],
+  "author": "Joshi Jay",
+  "license": "ISC",
+  "dependencies": {
+    "cloudinary": "^2.7.0",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.1",
+    "express": "^5.1.0",
+    "multer": "^2.0.2"
+  }
+}
