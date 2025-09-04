@@ -3,6 +3,21 @@ import { ApiError } from "../utils/apiError.js";
 import { ApiResponse } from "../utils/apiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 
+const getAllSubjects = asyncHandler(async (req, res) => {
+
+    const subjects = await Subject.find();
+
+    if(!subjects) {
+        throw new ApiError(500, "Failed to get all subjects")
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, subjects, "Get all subjects successfully")
+    )
+})
+
 const addSubject = asyncHandler(async (req, res) => {
     const { name, sem, branch } = req.body
 
@@ -34,5 +49,6 @@ const addSubject = asyncHandler(async (req, res) => {
 })
 
 export {
-    addSubject
+    addSubject,
+    getAllSubjects
 }

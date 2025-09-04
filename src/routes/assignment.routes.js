@@ -1,5 +1,6 @@
 import { Router } from "express";
 import { addAssignment, uploadAssignment } from "../controller/assignment.controller.js"
+import { upload } from '../middleware/multer.middleware.js'
 
 const router = Router()
 

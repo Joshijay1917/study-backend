@@ -4,6 +4,21 @@ import { ApiResponse } from "../utils/apiResponse.js"
 import { Note } from "../models/notes.models.js"
 import { Photo } from "../models/photo.models.js";
 
+const getAllNotes = asyncHandler(async (req, res) => {
+
+    const notes = await Note.find();
+
+    if(!notes) {
+        throw new ApiError(500, "Failed to get notes from database")
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, notes, "Get all notes successfully")
+    )
+})
+
 const addNotes = asyncHandler(async (req, res) => {
     const { name, subjectId, unit } = req.body
 
@@ -84,5 +99,6 @@ const uploadNotes = asyncHandler(async (req, res) => {
 
 export {
     addNotes,
-    uploadNotes
+    uploadNotes,
+    getAllNotes
 }
