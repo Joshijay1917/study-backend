@@ -4,7 +4,7 @@ import { upload } from '../middleware/multer.middleware.js'
 
 const router = Router()
 
-router.route("/getAll").get(getAllNotes)
+router.route("/getAll").post(getAllNotes)
 router.route("/add").post(addNotes)
 router.route("/upload").post(upload.single('photo'), uploadNotes)
 

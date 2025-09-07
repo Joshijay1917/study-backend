@@ -5,8 +5,13 @@ import { Note } from "../models/notes.models.js"
 import { Photo } from "../models/photo.models.js";
 
 const getAllNotes = asyncHandler(async (req, res) => {
+    const { subjectId } = req.body
 
-    const notes = await Note.find();
+    if(!subjectId) {
+        throw new ApiError(400, "Subject ID is required")
+    }
+
+    const notes = await Note.find({subject: subjectId});
 
     if(!notes) {
         throw new ApiError(500, "Failed to get notes from database")
@@ -26,7 +31,7 @@ const addNotes = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Missing required fields")
     }
 
-    const existing = await Note.findOne({ unit })
+    const existing = await Note.findOne({ unit:unit, subject: subjectId })
     if (existing) {
         throw new ApiError(400, "Notes already exists")
     }
@@ -44,7 +49,7 @@ const addNotes = asyncHandler(async (req, res) => {
     res
         .status(201)
         .json(
-            new ApiResponse(201, "Successfully create note")
+            new ApiResponse(201, note, "Successfully create note")
         )
 })
 

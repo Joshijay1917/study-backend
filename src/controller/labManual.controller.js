@@ -4,6 +4,26 @@ import { ApiResponse } from "../utils/apiResponse.js"
 import { LabManual } from "../models/labManual.models.js"
 import { Photo } from "../models/photo.models.js";
 
+const getAllLabmanuals = asyncHandler(async (req, res) => {
+    const { subjectId } = req.body
+
+    if(!subjectId) {
+        throw new ApiError(400, "Subject ID is required")
+    }
+
+    const labs = await LabManual.find({ subject: subjectId })
+
+    if(!labs) {
+        throw new ApiError(500, "Failed to get lab manuals from database")
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, labs, "Successfully get lab manuals")
+    )
+})
+
 const addLabManual = asyncHandler(async (req, res) => {
     const { name, subjectId } = req.body
 
@@ -77,5 +97,6 @@ const uploadLab = asyncHandler(async (req, res) => {
 
 export {
     addLabManual,
-    uploadLab
+    uploadLab,
+    getAllLabmanuals
 }

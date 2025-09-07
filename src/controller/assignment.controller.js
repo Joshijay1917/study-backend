@@ -4,6 +4,27 @@ import { ApiResponse } from "../utils/apiResponse.js"
 import { Assignment } from "../models/assignment.models.js"
 import { Photo } from "../models/photo.models.js";
 
+
+const getAllAssignment = asyncHandler(async (req, res) => {
+    const { subjectId } = req.body
+
+    if(!subjectId) {
+        throw new ApiError(400, "Subject ID is required")
+    }
+
+    const assignments = await Assignment.find({ subject: subjectId })
+
+    if(!assignments) {
+        throw new ApiError(500, "Failed to get assignments from database")
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, assignments, "Successfully get assignments")
+    )
+})
+
 const addAssignment = asyncHandler(async (req, res) => {
     const { number, subjectId, deadline } = req.body
 
@@ -11,7 +32,7 @@ const addAssignment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Missing required fields")
     }
 
-    const existing = await Assignment.findOne({ number })
+    const existing = await Assignment.findOne({ number: number, subject: subjectId })
     if (existing) {
         throw new ApiError(400, "Assignment already exists")
     }
@@ -83,5 +104,6 @@ const uploadAssignment = asyncHandler(async (req, res) => {
 
 export {
     addAssignment,
-    uploadAssignment
+    uploadAssignment,
+    getAllAssignment
 }
