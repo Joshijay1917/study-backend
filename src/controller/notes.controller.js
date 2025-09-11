@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js"
 import { ApiResponse } from "../utils/apiResponse.js"
 import { Note } from "../models/notes.models.js"
 import { Photo } from "../models/photo.models.js";
+import { uploadOnCloudinary } from '../utils/cloudinary.js'
 
 const getAllNotes = asyncHandler(async (req, res) => {
     const { subjectId } = req.body
@@ -54,9 +55,9 @@ const addNotes = asyncHandler(async (req, res) => {
 })
 
 const uploadNotes = asyncHandler(async (req, res) => {
-    const { unit } = req.body
+    const { notesId } = req.body
 
-    if (!unit) {
+    if (!notesId) {
         throw new ApiError(400, "Required fields not found!")
     }
     
@@ -70,7 +71,7 @@ const uploadNotes = asyncHandler(async (req, res) => {
         throw new ApiError(500, "File localpath not found")
     }
 
-    const note = await Note.findOne({ unit })
+    const note = await Note.findById(notesId)
     if(!note) {
         throw new ApiError(400, "Notes for this unit not found")
     }
@@ -102,8 +103,44 @@ const uploadNotes = asyncHandler(async (req, res) => {
     )
 })
 
+const getAllPhotos = asyncHandler(async (req, res) => {
+    /*
+        -First get NoteId from frontend
+        -check it is not null
+        -find note in database if not than throw error
+        -find all photos of that noteId in database
+        -check if not found than send message photos not found
+        -if found than send it to frontend
+    */
+
+    const { detailId } = req.body
+
+    if(!detailId) {
+        throw new ApiError(400, "Note ID is required")
+    }
+
+    const note = await Note.findById(detailId)
+
+    if(!note) {
+        throw new ApiError(400, "Notes not found")
+    }
+
+    const photos = await Photo.find({ typeId: detailId, type: "Note"})
+
+    if(!photos) {
+        res.status(200).json(new ApiResponse(404, [], "Photos not found"))
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, photos, "Get photos successfully")
+    )
+})
+
 export {
     addNotes,
     uploadNotes,
-    getAllNotes
+    getAllNotes,
+    getAllPhotos
 }

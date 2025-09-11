@@ -3,6 +3,7 @@ import { ApiError } from "../utils/apiError.js"
 import { ApiResponse } from "../utils/apiResponse.js"
 import { Assignment } from "../models/assignment.models.js"
 import { Photo } from "../models/photo.models.js";
+import { uploadOnCloudinary } from '../utils/cloudinary.js'
 
 
 const getAllAssignment = asyncHandler(async (req, res) => {
@@ -55,10 +56,10 @@ const addAssignment = asyncHandler(async (req, res) => {
 })
 
 const uploadAssignment = asyncHandler(async (req, res) => {
-    const { number } = req.body
+    const { assignmentId } = req.body
 
-    if (!number) {
-        throw new ApiError(400, "Assignment number is required")
+    if (!assignmentId) {
+        throw new ApiError(400, "Assignment ID is required")
     }
 
     if (!req.file) {
@@ -70,9 +71,10 @@ const uploadAssignment = asyncHandler(async (req, res) => {
         throw new ApiError(500, "File localpath not found")
     }
 
-    const assignment = await Assignment.findOne({ number })
+    const assignment = await Assignment.findById(assignmentId)
+    
     if (!assignment) {
-        throw new ApiError(400, "Assignment " + number + " not found")
+        throw new ApiError(400, "Assignment not found")
     }
 
     const photo = await uploadOnCloudinary(localPath);
@@ -102,8 +104,35 @@ const uploadAssignment = asyncHandler(async (req, res) => {
     )
 })
 
+const getAllPhotos = asyncHandler(async (req, res) => {
+    const { detailId } = req.body
+
+    if(!detailId) {
+        throw new ApiError(400, "Assignment ID is required")
+    }
+
+    const assignment = await Assignment.findById(detailId)
+
+    if(!assignment) {
+        throw new ApiError(400, "Assignment not found")
+    }
+
+    const photos = await Photo.find({typeId: detailId, type: "Assignment"})
+
+    if(!photos) {
+        res.status(200).json(new ApiResponse(404, [], "Photos not found"))
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, photos, "Get photos successfully")
+    )
+})
+
 export {
     addAssignment,
     uploadAssignment,
-    getAllAssignment
+    getAllAssignment,
+    getAllPhotos
 }
