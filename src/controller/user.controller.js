@@ -130,6 +130,9 @@ const currentUser = asyncHandler(async (req, res) => {
 const refreshToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken
 
+    console.log("Cookies=", req.cookies);
+    
+
     if(!incomingRefreshToken) {
         throw new ApiError(400, "Unauthorized request!!!")
     }
