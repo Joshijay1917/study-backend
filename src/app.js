@@ -7,7 +7,7 @@ const app = express();
 console.log("cors=", process.env.CORS_ORIGIN);
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "https://study-frontend-iota.vercel.app"],
   credentials: true
 }));
 app.use(express.json({ limit: '1mb'}));
