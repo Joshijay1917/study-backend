@@ -11,6 +11,11 @@ const userSchema = new mongoose.Schema({
         type: String,
         required: true
     },
+    phone: {
+        type: String,
+        match: [/^\d{10}$/, 'Please fill a valid 10-digit phone number'],
+        required: true
+    },
     email: {
         type: String,
         required: true
@@ -29,8 +34,7 @@ const userSchema = new mongoose.Schema({
         required: true
     },
     refresh_token: {
-        type: String,
-        required: true
+        type: String
     }
 }, { timestamps: true })
 
@@ -73,4 +77,4 @@ userSchema.methods.generateRefreshToken = async function() {
     )
 }
 
-export const User = mongoose.Schema("User", userSchema)
+export const User = mongoose.model("User", userSchema)
