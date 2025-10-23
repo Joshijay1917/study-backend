@@ -156,7 +156,7 @@ const refreshToken = asyncHandler(async (req, res) => {
             sameSite: 'none'
         }
 
-        const { refreshToken, accessToken } = await generateAccessRefreshTokens();
+        const { refreshToken, accessToken } = await generateAccessRefreshTokens(decodedToken._id);
 
         res
         .status(200)
