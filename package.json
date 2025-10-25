@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "this is a backend for upload photos and make pdf from it",
   "main": "index.js",
+  "type": "module",
   "scripts": {
     "dev": "node src/index.js"
   },
