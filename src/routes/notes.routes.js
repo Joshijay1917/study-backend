@@ -7,7 +7,7 @@ import { generatePdf } from "../utils/generatePdf.js";
 
 const router = Router()
 
-router.route("/getAll").post(verifyJwt, getAllNotes)
+router.route("/:subjectId").get(verifyJwt, getAllNotes)
 router.route("/add").post(addNotes)
 router.route("/upload").post(upload.single('photo'), uploadNotes, updateTracker)
 router.route("/photos").post(verifyJwt, getAllPhotos)

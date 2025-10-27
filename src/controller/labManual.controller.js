@@ -6,7 +6,7 @@ import { Photo } from "../models/photo.models.js";
 import { uploadOnCloudinary } from '../utils/cloudinary.js'
 
 const getAllLabmanuals = asyncHandler(async (req, res) => {
-    const { subjectId } = req.body
+    const { subjectId } = req.params
 
     if (!subjectId) {
         throw new ApiError(400, "Subject ID is required")

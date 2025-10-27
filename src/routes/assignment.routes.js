@@ -6,7 +6,7 @@ import { updateTracker } from "../middleware/update.middleware.js";
 
 const router = Router()
 
-router.route("/getAll").post(verifyJwt, getAllAssignment)
+router.route("/:subjectId").get(verifyJwt, getAllAssignment)
 router.route("/add").post(addAssignment)
 router.route("/upload").post(upload.single('photo'), uploadAssignment, updateTracker)
 router.route("/photos").post(verifyJwt, getAllPhotos)
