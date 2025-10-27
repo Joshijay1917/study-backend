@@ -90,19 +90,19 @@ const loginUser = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Username and password is required")
     }
 
-    const userExists = await User.findOne({username})
+    const user = await User.findOne({username})
 
-    if(!userExists) {
+    if(!user) {
         throw new ApiError(400, "User does not exists")
     }
 
-    const isPasswordValid = await userExists.comaprePassword(password)
+    const isPasswordValid = await user.comaprePassword(password)
 
     if(!isPasswordValid) {
         throw new ApiError(400, "Password is not valid");
     }
 
-    const { accessToken, refreshToken } = await generateAccessRefreshTokens(userExists._id)
+    const { accessToken, refreshToken } = await generateAccessRefreshTokens(user._id)
 
     const options = {
         httpOnly: true,
@@ -115,7 +115,7 @@ const loginUser = asyncHandler(async (req, res) => {
     .cookie("accessToken", accessToken, options)
     .cookie("refreshToken", refreshToken, options)
     .json(
-        new ApiResponse(200, {accessToken, refreshToken}, "User LoggedIn Successfully")
+        new ApiResponse(200, {user, accessToken, refreshToken}, "User LoggedIn Successfully")
     )
 })
 
@@ -163,7 +163,7 @@ const refreshToken = asyncHandler(async (req, res) => {
         .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
-            new ApiResponse(200, {accessToken, refreshToken},"Tokens refreshed successfully")
+            new ApiResponse(200, {user, accessToken, refreshToken},"Tokens refreshed successfully")
         )
     } catch (error) {
         throw new ApiError(400, "Token is Invalid " + error)
