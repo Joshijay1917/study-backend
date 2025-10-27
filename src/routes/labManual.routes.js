@@ -9,6 +9,6 @@ const router = Router()
 router.route("/:subjectId").get(verifyJwt, getAllLabmanuals)
 router.route("/add").post(addLabManual)
 router.route("/upload").post(upload.single('photo'), uploadLab, updateTracker)
-router.route("/photos").post(verifyJwt, getAllPhotos)
+router.route("/photos/:typeId").get(verifyJwt, getAllPhotos)
 
 export default router

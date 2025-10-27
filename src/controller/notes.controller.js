@@ -120,19 +120,19 @@ const getAllPhotos = asyncHandler(async (req, res) => {
         -if found than send it to frontend
     */
 
-    const { detailId } = req.body
+    const { typeId } = req.params
 
-    if(!detailId) {
+    if(!typeId) {
         throw new ApiError(400, "Note ID is required")
     }
 
-    const note = await Note.findById(detailId)
+    const note = await Note.findById(typeId)
 
     if(!note) {
         throw new ApiError(400, "Notes not found")
     }
 
-    const photos = await Photo.find({ typeId: detailId, type: "Note"})
+    const photos = await Photo.find({ typeId: typeId, type: "Note"})
 
     if(!photos) {
         res.status(200).json(new ApiResponse(404, [], "Photos not found"))

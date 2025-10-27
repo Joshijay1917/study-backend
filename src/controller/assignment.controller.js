@@ -112,22 +112,22 @@ const uploadAssignment = asyncHandler(async (req, res) => {
 })
 
 const getAllPhotos = asyncHandler(async (req, res) => {
-    const { detailId } = req.body
+    const { typeId } = req.body
 
-    if(!detailId) {
+    if(!typeId) {
         throw new ApiError(400, "Assignment ID is required")
     }
 
-    const assignment = await Assignment.findById(detailId)
+    const assignment = await Assignment.findById(typeId)
 
     if(!assignment) {
         throw new ApiError(400, "Assignment not found")
     }
 
-    const photos = await Photo.find({typeId: detailId, type: "Assignment"})
+    const photos = await Photo.find({typeId: typeId, type: "Assignment"})
 
     if(!photos) {
-        res.status(200).json(new ApiResponse(404, [], "Photos not found"))
+        res.status(404).json(new ApiResponse(404, [], "Photos not found"))
     }
 
     res

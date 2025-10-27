@@ -9,6 +9,6 @@ const router = Router()
 router.route("/:subjectId").get(verifyJwt, getAllAssignment)
 router.route("/add").post(addAssignment)
 router.route("/upload").post(upload.single('photo'), uploadAssignment, updateTracker)
-router.route("/photos").post(verifyJwt, getAllPhotos)
+router.route("/photos/:typeId").get(verifyJwt, getAllPhotos)
 
 export default router

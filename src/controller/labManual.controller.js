@@ -104,19 +104,19 @@ const uploadLab = asyncHandler(async (req, res) => {
 })
 
 const getAllPhotos = asyncHandler(async (req, res) => {
-    const { detailId } = req.body
+    const { typeId } = req.body
 
-    if (!detailId) {
+    if (!typeId) {
         throw new ApiError(400, "Lab Manual ID is required")
     }
 
-    const labmanual = await LabManual.findById(detailId)
+    const labmanual = await LabManual.findById(typeId)
 
     if (!labmanual) {
         throw new ApiError(400, "Lab Manual not found")
     }
 
-    const photos = await Photo.find({ typeId: detailId, type: "LabManual" })
+    const photos = await Photo.find({ typeId: typeId, type: "LabManual" })
 
     if (!photos) {
         res.status(200).json(new ApiResponse(404, [], "Photos not found"))
