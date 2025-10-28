@@ -43,14 +43,15 @@ export const updateTracker = async (req, res, next) => {
 
 
         let record = await LastUpdate.findOne({ date })
-        console.log("record=", record);
-
+        
         if (!record) {
             console.log("Create Update Document!!");
-            record = await LastUpdate.create()
+            record = await LastUpdate.create({ date, subjects: [] })
         }
+        
+        console.log("record=", record);
 
-        if (subject && !record?.subjects?.includes(subject)) {
+        if (subject && !record.subjects.includes(subject)) {
             record.subjects.push(subject);
         }
 
