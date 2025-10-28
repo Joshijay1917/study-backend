@@ -3,6 +3,7 @@ import { LastUpdate } from "../models/lastUpdate.models.js"
 import { Note } from "../models/notes.models.js"
 import { Assignment } from "../models/assignment.models.js"
 import { LabManual } from "../models/labManual.models.js"
+import { ApiResponse } from "../utils/apiResponse.js"
 
 export const updateTracker = async (req, res, next) => {
     try {
