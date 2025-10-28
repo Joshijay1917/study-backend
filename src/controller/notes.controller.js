@@ -96,11 +96,11 @@ const uploadNotes = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Failed to save in database")
     }
 
-    res
-    .status(201)
-    .json(
-        new ApiResponse(201, saveRes, "Successfully saved in database")
-    )
+    req.uploadData = {
+        ...saveRes
+    }
+
+    next();
 })
 
 const getAllPhotos = asyncHandler(async (req, res) => {

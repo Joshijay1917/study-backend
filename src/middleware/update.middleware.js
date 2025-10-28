@@ -6,8 +6,8 @@ import { LabManual } from "../models/labManual.models.js"
 
 export const updateTracker = async (req, res, next) => {
     try {
-        const { type, typeId, subject } = res.data
-        
+        const { type, typeId, subject } = req.uploadData
+
         if (!type || !typeId || !subject) {
             throw new ApiError(400, "Update Tracker middleware error required fields not found");
         }
@@ -39,10 +39,10 @@ export const updateTracker = async (req, res, next) => {
         const date = new Date();
         date.setHours(0, 0, 0, 0)
 
-        
+
         let record = await LastUpdate.findOne({ date })
         console.log("record=", record);
-        
+
         if (!record) {
             console.log("Create Update Document!!");
             record = await LastUpdate.create()
@@ -68,7 +68,11 @@ export const updateTracker = async (req, res, next) => {
 
         await record.save();
 
-        next();
+        res
+        .status(201)
+        .json(
+            new ApiResponse(201, req.uploadData, "Successfully saved in database and update tracker")
+        )
     } catch (error) {
         console.error("UpdateTracker middleware error " + error)
         throw new ApiError(500, "UpdateTracker middleware error " + error)
