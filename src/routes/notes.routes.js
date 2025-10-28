@@ -10,7 +10,7 @@ const router = Router()
 router.route("/:subjectId").get(verifyJwt, getAllNotes)
 router.route("/add").post(addNotes)
 router.route("/upload").post(upload.single('photo'), uploadNotes, updateTracker)
-router.route("/photos/:typeId").get(getAllPhotos)
+router.route("/photos/:typeId").get(verifyJwt, getAllPhotos)
 router.route("/pdf").post(verifyJwt, generatePdf)
 
 export default router

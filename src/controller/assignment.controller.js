@@ -112,7 +112,7 @@ const uploadAssignment = asyncHandler(async (req, res) => {
 })
 
 const getAllPhotos = asyncHandler(async (req, res) => {
-    const { typeId } = req.body
+    const { typeId } = req.params
 
     if(!typeId) {
         throw new ApiError(400, "Assignment ID is required")

@@ -104,7 +104,7 @@ const uploadLab = asyncHandler(async (req, res) => {
 })
 
 const getAllPhotos = asyncHandler(async (req, res) => {
-    const { typeId } = req.body
+    const { typeId } = req.params
 
     if (!typeId) {
         throw new ApiError(400, "Lab Manual ID is required")
