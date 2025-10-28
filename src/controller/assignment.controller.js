@@ -9,21 +9,21 @@ import { uploadOnCloudinary } from '../utils/cloudinary.js'
 const getAllAssignment = asyncHandler(async (req, res) => {
     const { subjectId } = req.params
 
-    if(!subjectId) {
+    if (!subjectId) {
         throw new ApiError(400, "Subject ID is required")
     }
 
     const assignments = await Assignment.find({ subject: subjectId })
 
-    if(!assignments) {
+    if (!assignments) {
         throw new ApiError(500, "Failed to get assignments from database")
     }
 
     res
-    .status(200)
-    .json(
-        new ApiResponse(200, assignments, "Successfully get assignments")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, assignments, "Successfully get assignments")
+        )
 })
 
 const addAssignment = asyncHandler(async (req, res) => {
@@ -72,7 +72,7 @@ const uploadAssignment = asyncHandler(async (req, res, next) => {
     }
 
     const assignment = await Assignment.findById(assignmentId)
-    
+
     if (!assignment) {
         throw new ApiError(400, "Assignment not found")
     }
@@ -97,7 +97,7 @@ const uploadAssignment = asyncHandler(async (req, res, next) => {
         throw new ApiError(500, "Failed to save in database")
     }
 
-     req.uploadData = {
+    req.uploadData = {
         ...saveRes
     }
 
@@ -107,26 +107,46 @@ const uploadAssignment = asyncHandler(async (req, res, next) => {
 const getAllPhotos = asyncHandler(async (req, res) => {
     const { typeId } = req.params
 
-    if(!typeId) {
+    if (!typeId) {
         throw new ApiError(400, "Assignment ID is required")
     }
 
     const assignment = await Assignment.findById(typeId)
 
-    if(!assignment) {
+    if (!assignment) {
         throw new ApiError(400, "Assignment not found")
     }
 
-    const photos = await Photo.find({typeId: typeId, type: "Assignment"})
+    const photos = await Photo.find({ typeId: typeId, type: "Assignment" })
 
-    if(!photos) {
+    if (!photos) {
         res.status(404).json(new ApiResponse(404, [], "Photos not found"))
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, photos, "Get photos successfully")
+        )
+})
+
+const deleteAssignment = asyncHandler(async (req, res) => {
+    const { assignmentId } = req.body
+
+    if (!assignmentId) {
+        throw new ApiError(400, "Assignment ID is required!")
+    }
+
+    const result = await Assignment.deleteOne({ _id: assignmentId })
+
+    if (result.deletedCount === 0) {
+        throw new ApiError(500, "Assignment not found!!")
     }
 
     res
     .status(200)
     .json(
-        new ApiResponse(200, photos, "Get photos successfully")
+        new ApiResponse(200, result, "Successfully delete assignment!")
     )
 })
 
@@ -134,5 +154,6 @@ export {
     addAssignment,
     uploadAssignment,
     getAllAssignment,
-    getAllPhotos
+    getAllPhotos,
+    deleteAssignment
 }

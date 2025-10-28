@@ -89,7 +89,7 @@ const uploadLab = asyncHandler(async (req, res, next) => {
         throw new ApiError(500, "Failed to save in database")
     }
 
-     req.uploadData = {
+    req.uploadData = {
         ...saveRes
     }
 
@@ -116,9 +116,29 @@ const getAllPhotos = asyncHandler(async (req, res) => {
     }
 
     res
+        .status(200)
+        .json(
+            new ApiResponse(200, photos, "Get photos successfully")
+        )
+})
+
+const deleteLabmanual = asyncHandler(async (req, res) => {
+    const { labmanualId } = req.body
+
+    if (!labmanualId) {
+        throw new ApiError(400, "Lab Manual ID is required!")
+    }
+
+    const result = await LabManual.deleteOne({ _id: labmanualId })
+
+    if (result.deletedCount === 0) {
+        throw new ApiError(500, "Lab Manual not found!!")
+    }
+
+    res
     .status(200)
     .json(
-        new ApiResponse(200, photos, "Get photos successfully")
+        new ApiResponse(200, result, "Successfully delete lab manual!")
     )
 })
 
@@ -126,5 +146,6 @@ export {
     addLabManual,
     uploadLab,
     getAllLabmanuals,
-    getAllPhotos
+    getAllPhotos,
+    deleteLabmanual
 }

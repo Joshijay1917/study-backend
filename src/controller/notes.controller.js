@@ -138,9 +138,30 @@ const getAllPhotos = asyncHandler(async (req, res) => {
     )
 })
 
+const deleteNote = asyncHandler(async (req, res) => {
+    const { notesId } = req.body
+
+    if(!notesId) {
+        throw new ApiError(400, "Notes ID is required!")
+    }
+
+    const result = await Note.deleteOne({ _id: notesId })
+
+    if(result.deletedCount === 0) {
+        throw new ApiError(500, "Note not found!!")
+    }
+
+    res
+    .status(200)
+    .json(
+        new ApiResponse(200, result, "Successfully delete note!")
+    )
+})
+
 export {
     addNotes,
     uploadNotes,
     getAllNotes,
-    getAllPhotos
+    getAllPhotos,
+    deleteNote
 }
