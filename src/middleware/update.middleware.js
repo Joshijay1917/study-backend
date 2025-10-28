@@ -58,7 +58,7 @@ export const updateTracker = async (req, res, next) => {
         else targetArray = record.labmanual;
 
         console.log("tarArr=", targetArray);
-        let item = targetArray.find(r => r.typeId === typeId);
+        let item = targetArray.find(r => r.typeId.toString() === typeId.toString());
         console.log("Item=", item);
         
         if (!item) {
