@@ -50,7 +50,7 @@ export const updateTracker = async (req, res, next) => {
             record = await LastUpdate.create()
         }
 
-        if (subject && !record.subjects.includes(subject)) {
+        if (subject && !record?.subjects?.includes(subject)) {
             record.subjects.push(subject);
         }
 
