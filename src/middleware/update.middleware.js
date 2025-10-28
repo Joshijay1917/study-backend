@@ -8,6 +8,8 @@ export const updateTracker = async (req, res, next) => {
     try {
         const { type, typeId, subject } = req.uploadData
 
+        console.log("uploadData:", req.uploadData);
+
         if (!type || !typeId || !subject) {
             throw new ApiError(400, "Update Tracker middleware error required fields not found");
         }
