@@ -62,9 +62,9 @@ export const updateTracker = async (req, res, next) => {
 
         let item = targetArray.find(r => r.typeId === typeId);
         if (!item) {
-            targetArray.push({ typeId, title, photos: [res._doc.url] });
+            targetArray.push({ typeId, title, photos: [req.uploadData._doc.url] });
         } else {
-            item.photos.push(res._doc.url);
+            item.photos.push(req.uploadData._doc.url);
         }
 
         console.log("CurrentSubjects=", record.subjects);
