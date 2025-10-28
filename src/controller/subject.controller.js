@@ -7,27 +7,27 @@ const getAllSubjects = asyncHandler(async (req, res) => {
 
     const subjects = await Subject.find();
 
-    if(!subjects) {
+    if (!subjects) {
         throw new ApiError(500, "Failed to get all subjects")
     }
 
     res
-    .status(200)
-    .json(
-        new ApiResponse(200, subjects, "Get all subjects successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, subjects, "Get all subjects successfully")
+        )
 })
 
 const addSubject = asyncHandler(async (req, res) => {
     const { name, sem, branch } = req.body
 
-    if(!name || !sem || !branch) {
+    if (!name || !sem || !branch) {
         throw new ApiError(400, "Required fields are missing")
     }
 
     const exists = await Subject.findOne({ name })
 
-    if(exists) {
+    if (exists) {
         throw new ApiError(400, "Subject already exists")
     }
 
@@ -37,18 +37,39 @@ const addSubject = asyncHandler(async (req, res) => {
         branch
     })
 
-    if(!subject) {
+    if (!subject) {
         throw new ApiError(500, "Failed to save in database!")
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, subject, "Successfully saved in database")
+        )
+})
+
+const deleteSubject = asyncHandler(async (req, res) => {
+    const { subjectId } = req.body
+
+    if (!subjectId) {
+        throw new ApiError(400, "Subject ID is required!")
+    }
+
+    const result = await Subject.deleteOne({ _id: subjectId })
+
+    if (result.deletedCount === 0) {
+        throw new ApiError(500, "Subject not found!!")
     }
 
     res
     .status(200)
     .json(
-        new ApiResponse(200, subject, "Successfully saved in database")
+        new ApiResponse(200, result, "Successfully delete Subject!")
     )
 })
 
 export {
     addSubject,
-    getAllSubjects
+    getAllSubjects,
+    deleteSubject
 }
