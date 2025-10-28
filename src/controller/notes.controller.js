@@ -96,13 +96,6 @@ const uploadNotes = asyncHandler(async (req, res) => {
         throw new ApiError(500, "Failed to save in database")
     }
 
-    res.locals = { 
-        type: saveRes.type,
-        typeId: saveRes.typeId,
-        subject: saveRes.subject,
-        url: saveRes.url
-    }
-
     res
     .status(201)
     .json(
