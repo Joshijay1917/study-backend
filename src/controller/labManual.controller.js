@@ -48,7 +48,7 @@ const addLabManual = asyncHandler(async (req, res) => {
         )
 })
 
-const uploadLab = asyncHandler(async (req, res) => {
+const uploadLab = asyncHandler(async (req, res, next) => {
     const { labmanualId } = req.body
 
     if (!labmanualId) {

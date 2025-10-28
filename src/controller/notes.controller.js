@@ -54,7 +54,7 @@ const addNotes = asyncHandler(async (req, res) => {
         )
 })
 
-const uploadNotes = asyncHandler(async (req, res) => {
+const uploadNotes = asyncHandler(async (req, res, next) => {
     const { notesId } = req.body
 
     if (!notesId) {

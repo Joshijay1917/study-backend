@@ -55,7 +55,7 @@ const addAssignment = asyncHandler(async (req, res) => {
         )
 })
 
-const uploadAssignment = asyncHandler(async (req, res) => {
+const uploadAssignment = asyncHandler(async (req, res, next) => {
     const { assignmentId } = req.body
 
     if (!assignmentId) {
