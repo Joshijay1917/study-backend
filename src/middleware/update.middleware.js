@@ -9,8 +9,6 @@ export const updateTracker = async (req, res, next) => {
     try {
         const { type, typeId, subject } = req.uploadData._doc
 
-        console.log("uploadData:", req.uploadData._doc);
-
         if (!type || !typeId || !subject) {
             throw new ApiError(400, "Update Tracker middleware error required fields not found");
         }
@@ -49,8 +47,6 @@ export const updateTracker = async (req, res, next) => {
             console.log("Create Update Document!!");
             record = await LastUpdate.create({ date, subjects: [] })
         }
-        
-        console.log("record=", record);
 
         if (subject && !record.subjects.includes(subject)) {
             record.subjects.push(subject);
@@ -61,14 +57,15 @@ export const updateTracker = async (req, res, next) => {
         else if (type === "Assignment") targetArray = record.assignments;
         else targetArray = record.labmanual;
 
+        console.log("tarArr=", targetArray);
         let item = targetArray.find(r => r.typeId === typeId);
+        console.log("Item=", item);
+        
         if (!item) {
             targetArray.push({ typeId, title, photos: [req.uploadData._doc.url] });
         } else {
             item.photos.push(req.uploadData._doc.url);
         }
-
-        console.log("CurrentSubjects=", record.subjects);
 
         await record.save();
 
