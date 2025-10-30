@@ -21,7 +21,8 @@ const photoSchema = new mongoose.Schema({
     },
     public_id: {
         type: String,
-        required: true
+        required: true,
+        unique: true
     },
     type: {
         type: String,

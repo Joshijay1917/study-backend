@@ -98,10 +98,10 @@ const uploadLab = asyncHandler(async (req, res, next) => {
     const results = await Promise.all(uploadPromises)
 
     for (const r of results) {
-        if(r) uploadedPhotos.push(r)
+        if (r) uploadedPhotos.push(r)
     }
 
-    if(uploadedPhotos.length === 0) {
+    if (uploadedPhotos.length === 0) {
         throw new ApiError(500, "No photos were uploaded successfully");
     }
 
@@ -143,12 +143,12 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Lab Manual ID is required!")
     }
 
-    const photos = await Photo.find({ typeId: labmanualId, type: "LabManual"})
+    const photos = await Photo.find({ typeId: labmanualId, type: "LabManual" })
 
-    if(photos.length > 0) {
+    if (photos.length > 0) {
         const results = await Promise.all(
             photos.map(async (photo) => {
-                if(photo.public_id) {
+                if (photo.public_id) {
                     try {
                         await deleteItemOnCloudinary(photo.public_id)
                     } catch (error) {
@@ -158,8 +158,8 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
             })
         )
 
-        const labmanualPhotos = await Photo.deleteMany({ typeId: labmanualId, type: "LabManual"})
-        if(labmanualPhotos.deletedCount === 0) {
+        const labmanualPhotos = await Photo.deleteMany({ typeId: labmanualId, type: "LabManual" })
+        if (labmanualPhotos.deletedCount === 0) {
             throw new ApiError(500, "Failed to delete lab manual photos on database!!")
         }
     }
@@ -177,10 +177,62 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
         )
 })
 
+const deleteOne = (asyncHandler(async (req, res) => {
+    const { publicId } = req.body
+
+    if (!publicId) {
+        throw new ApiError(400, "Public Id is required!!")
+    }
+
+    const photo = await Photo.findOne({ public_id: publicId })
+    if (!photo) {
+        throw new ApiError(404, "Failed to find photo in database!")
+    }
+
+    try {
+        await deleteItemOnCloudinary(publicId)
+    } catch (error) {
+        throw new ApiError(500, `Failed to delete item on cloudinary!!! Err:${error.message}`)
+    }
+
+    const result = await Photo.deleteOne({ public_id: publicId })
+    if (result.deletedCount === 0) {
+        throw new ApiError(404, "Photo not found in database!")
+    }
+
+    const updateResult = await LastUpdate.updateMany(
+        {
+            $or: [
+                { "notes.photos": photo.url },
+                { "assignments.photos": photo.url },
+                { "labmanual.photos": photo.url },
+            ]
+        },
+        {
+            $pull: {
+                "notes.$[].photos": photo.url,
+                "assignments.$[].photos": photo.url,
+                "labmanual.$[].photos": photo.url,
+            }
+        }
+    )
+
+    if (updateResult.modifiedCount === 0) {
+        console.log("No matching LastUpdate entries found — maybe already cleaned up.");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "Successfully delete photo!!")
+        )
+}))
+
 export {
     addLabManual,
     uploadLab,
     getAllLabmanuals,
     getAllPhotos,
-    deleteLabmanual
+    deleteLabmanual,
+    deleteOne
 }

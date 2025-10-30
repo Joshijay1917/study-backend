@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js"
 import { Note } from "../models/notes.models.js"
 import { Photo } from "../models/photo.models.js";
 import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
+import { LastUpdate } from "../models/lastUpdate.models.js";
 
 const getAllNotes = asyncHandler(async (req, res) => {
     const { subjectId } = req.params
@@ -75,19 +76,19 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
         if (!localPath) {
             throw new ApiError(500, "File localpath not found")
         }
-        
+
         const photo = await uploadOnCloudinary(localPath);
         if (!photo) {
             throw new ApiError(500, "Cannot upload file")
         }
-        
-        return {index, photo};
+
+        return { index, photo };
     })
-    
+
     const results = await Promise.all(uploadPromises)
-    
+
     results.sort((a, b) => a.index - b.index);
-    
+
     const uploadedPhotos = [];
 
     for (const r of results) {
@@ -107,11 +108,11 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
             type: "Note",
             typeId: note._id
         })
-        
+
         if (!saveRes) {
             throw new ApiError(500, "Failed to save in database")
         }
-        
+
         uploadedPhotos.push(saveRes)
     }
 
@@ -174,7 +175,7 @@ const deleteNote = asyncHandler(async (req, res) => {
                     try {
                         await deleteItemOnCloudinary(photo.public_id)
                     } catch (error) {
-                        console.error("Failed to delete photo on cloudinary!! Err:", error)
+                        console.error(`Failed to delete photo on cloudinary!! Err:${error.message}`)
                     }
                 }
             })
@@ -199,10 +200,62 @@ const deleteNote = asyncHandler(async (req, res) => {
         )
 })
 
+const deleteOne = asyncHandler(async (req, res) => {
+    const { publicId } = req.body
+
+    if (!publicId) {
+        throw new ApiError(400, "Public Id is required!!")
+    }
+
+    const photo = await Photo.findOne({ public_id: publicId })
+    if (!photo) {
+        throw new ApiError(404, "Failed to find photo in database!")
+    }
+
+    try {
+        await deleteItemOnCloudinary(publicId)
+    } catch (error) {
+        throw new ApiError(500, `Failed to delete item on cloudinary!!! Err:${error.message}`)
+    }
+
+    const result = await Photo.deleteOne({ public_id: publicId })
+    if (result.deletedCount === 0) {
+        throw new ApiError(404, "Photo not found in database!")
+    }
+
+    const updateResult = await LastUpdate.updateMany(
+        {
+            $or: [
+                { "notes.photos": photo.url },
+                { "assignments.photos": photo.url },
+                { "labmanual.photos": photo.url },
+            ]
+        },
+        {
+            $pull: {
+                "notes.$[].photos": photo.url,
+                "assignments.$[].photos": photo.url,
+                "labmanual.$[].photos": photo.url,
+            }
+        }
+    )
+
+    if (updateResult.modifiedCount === 0) {
+        console.log("No matching LastUpdate entries found — maybe already cleaned up.");
+    }
+
+    res
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "Successfully delete photo!!")
+        )
+})
+
 export {
     addNotes,
     uploadNotes,
     getAllNotes,
     getAllPhotos,
-    deleteNote
+    deleteNote,
+    deleteOne
 }

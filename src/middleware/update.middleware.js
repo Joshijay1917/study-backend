@@ -66,7 +66,6 @@ export const updateTracker = async (req, res, next) => {
         if (!item) {
             targetArray.push({ typeId, title, photos: uploads.map(u => u.url) });
         } else {
-            // item.photos.push(req.uploadData._doc.url);
             uploads.forEach(u => item.photos.push(u.url));
         }
 
