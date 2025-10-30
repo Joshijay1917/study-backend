@@ -70,18 +70,32 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Notes for this unit not found")
     }
 
-    const uploadedPhotos = [];
-
-    const uploadPromises = req.files.map(async (file) => {
+    const uploadPromises = req.files.map(async (file, index) => {
         const localPath = file.path
         if (!localPath) {
             throw new ApiError(500, "File localpath not found")
         }
-
+        
         const photo = await uploadOnCloudinary(localPath);
         if (!photo) {
             throw new ApiError(500, "Cannot upload file")
         }
+        
+        return {index, photo};
+    })
+    
+    const results = await Promise.all(uploadPromises)
+    
+    results.sort((a, b) => a.index - b.index);
+    
+    const uploadedPhotos = [];
+
+    for (const r of results) {
+        if (!r || !r.photo) {
+            continue;
+        }
+
+        const photo = r.photo
 
         const saveRes = await Photo.create({
             name: photo.display_name,
@@ -93,18 +107,12 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
             type: "Note",
             typeId: note._id
         })
-
+        
         if (!saveRes) {
             throw new ApiError(500, "Failed to save in database")
         }
-
-        return saveRes;
-    })
-
-    const results = await Promise.all(uploadPromises)
-
-    for (const r of results) {
-        if (r) uploadedPhotos.push(r)
+        
+        uploadedPhotos.push(saveRes)
     }
 
     if (uploadedPhotos.length === 0) {
