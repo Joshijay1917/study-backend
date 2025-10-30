@@ -10,7 +10,7 @@ const router = Router()
 router.route("/:subjectId").get(verifyJwt, getAllNotes)
 router.route("/add").post(addNotes)
 router.route("/delete").delete(deleteNote)
-router.route("/upload").post(upload.single('photo'), uploadNotes, updateTracker)
+router.route("/upload").post(upload.array('photos'), uploadNotes, updateTracker)
 router.route("/photos/:typeId").get(verifyJwt, getAllPhotos)
 router.route("/pdf").post(verifyJwt, generatePdf)
 

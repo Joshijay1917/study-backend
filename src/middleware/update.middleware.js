@@ -7,10 +7,17 @@ import { ApiResponse } from "../utils/apiResponse.js"
 
 export const updateTracker = async (req, res, next) => {
     try {
-        const { type, typeId, subject } = req.uploadData._doc
+        const uploads = req.uploadData
+        console.log("Uploadphotos=", req.uploadData);
+        
 
-        if (!type || !typeId || !subject) {
-            throw new ApiError(400, "Update Tracker middleware error required fields not found");
+        if (!uploads || uploads.length === 0) {
+            throw new ApiError(400, "No uploaded data found in updateTracker");
+        }
+
+        const { type, typeId, subject } = uploads[0]
+        if (!type || !typeId || !subject) { 
+            throw new ApiError(400, "Update Tracker middleware error required fields not found"); 
         }
 
         let typeDetails, title;
@@ -57,14 +64,12 @@ export const updateTracker = async (req, res, next) => {
         else if (type === "Assignment") targetArray = record.assignments;
         else targetArray = record.labmanual;
 
-        console.log("tarArr=", targetArray);
         let item = targetArray.find(r => r.typeId.toString() === typeId.toString());
-        console.log("Item=", item);
-        
         if (!item) {
-            targetArray.push({ typeId, title, photos: [req.uploadData._doc.url] });
+            targetArray.push({ typeId, title, photos: uploads.map(u => u.url) });
         } else {
-            item.photos.push(req.uploadData._doc.url);
+            // item.photos.push(req.uploadData._doc.url);
+            uploads.forEach(u => item.photos.push(u.url));
         }
 
         await record.save();
@@ -72,7 +77,7 @@ export const updateTracker = async (req, res, next) => {
         res
         .status(201)
         .json(
-            new ApiResponse(201, req.uploadData._doc, "Successfully saved in database and update tracker")
+            new ApiResponse(201, uploads, "Successfully saved in database and update tracker")
         )
     } catch (error) {
         console.error("UpdateTracker middleware error " + error)

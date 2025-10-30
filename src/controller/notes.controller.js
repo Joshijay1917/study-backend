@@ -61,14 +61,8 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Required fields not found!")
     }
     
-    if(!req.file) {
+    if(!req.files || req.files.length === 0) {
         throw new ApiError(400, "File not found")
-    }
-
-    const localPath = req.file.path
-
-    if(!localPath) {
-        throw new ApiError(500, "File localpath not found")
     }
 
     const note = await Note.findById(notesId)
@@ -76,29 +70,39 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Notes for this unit not found")
     }
 
-    const photo = await uploadOnCloudinary(localPath);
+    const uploadedPhotos = [];
+    for (const file of req.files) {
 
-    if(!photo) {
-        throw new ApiError(500, "Cannot upload file")
+        const localPath = file.path
+        if(!localPath) {
+            throw new ApiError(500, "File localpath not found")
+        }
+        
+        const photo = await uploadOnCloudinary(localPath);
+        if(!photo) {
+            throw new ApiError(500, "Cannot upload file")
+        }
+
+        const saveRes = await Photo.create({
+            name: photo.display_name,
+            subject: note.subject,
+            width: photo.width,
+            height: photo.height,
+            url: photo.url,
+            type: "Note",
+            typeId: note._id
+        })
+    
+        if(!saveRes) {
+            throw new ApiError(500, "Failed to save in database")
+        }
+
+        uploadedPhotos.push(saveRes);
     }
 
-    const saveRes = await Photo.create({
-        name: photo.display_name,
-        subject: note.subject,
-        width: photo.width,
-        height: photo.height,
-        url: photo.url,
-        type: "Note",
-        typeId: note._id
-    })
-
-    if(!saveRes) {
-        throw new ApiError(500, "Failed to save in database")
-    }
-
-    req.uploadData = {
-        ...saveRes
-    }
+    // req.uploadData = {
+    //     ...saveRes
+    // }
 
     next();
 })
