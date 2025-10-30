@@ -103,6 +103,7 @@ const uploadNotes = asyncHandler(async (req, res, next) => {
     // req.uploadData = {
     //     ...saveRes
     // }
+    req.uploadData = uploadedPhotos
 
     next();
 })
