@@ -19,6 +19,10 @@ const photoSchema = new mongoose.Schema({
         type: String, //cloudinary url
         required: true
     },
+    public_id: {
+        type: String,
+        required: true
+    },
     type: {
         type: String,
         enum: ["Note", "LabManual", "Assignment"],

@@ -3,7 +3,7 @@ import { ApiError } from "../utils/apiError.js"
 import { ApiResponse } from "../utils/apiResponse.js"
 import { LabManual } from "../models/labManual.models.js"
 import { Photo } from "../models/photo.models.js";
-import { uploadOnCloudinary } from '../utils/cloudinary.js'
+import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
 
 const getAllLabmanuals = asyncHandler(async (req, res) => {
     const { subjectId } = req.params
@@ -55,13 +55,8 @@ const uploadLab = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Lab Manual ID is required")
     }
 
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
         throw new ApiError(400, "File not found")
-    }
-
-    const localPath = req.file.path
-    if (!localPath) {
-        throw new ApiError(500, "File localpath not found")
     }
 
     const labmanual = await LabManual.findById(labmanualId)
@@ -69,29 +64,48 @@ const uploadLab = asyncHandler(async (req, res, next) => {
         throw new ApiError("Sorry cannot find labmanual!!")
     }
 
-    const photo = await uploadOnCloudinary(localPath);
+    const uploadedPhotos = []
 
-    if (!photo) {
-        throw new ApiError(500, "Cannot upload file")
-    }
+    const uploadPromises = req.files.map(async (file) => {
+        const localPath = file.path
+        if (!localPath) {
+            throw new ApiError(500, "File localpath not found")
+        }
 
-    const saveRes = await Photo.create({
-        name: photo.display_name,
-        subject: labmanual.subject,
-        width: photo.width,
-        height: photo.height,
-        url: photo.url,
-        type: "LabManual",
-        typeId: labmanual._id
+        const photo = await uploadOnCloudinary(localPath);
+        if (!photo) {
+            throw new ApiError(500, "Cannot upload file")
+        }
+
+        const saveRes = await Photo.create({
+            name: photo.display_name,
+            subject: labmanual.subject,
+            width: photo.width,
+            height: photo.height,
+            url: photo.url,
+            public_id: photo.public_id,
+            type: "LabManual",
+            typeId: labmanual._id
+        })
+
+        if (!saveRes) {
+            throw new ApiError(500, "Failed to save in database")
+        }
+
+        return saveRes;
     })
 
-    if (!saveRes) {
-        throw new ApiError(500, "Failed to save in database")
+    const results = await Promise.all(uploadPromises)
+
+    for (const r of results) {
+        if(r) uploadedPhotos.push(r)
     }
 
-    req.uploadData = {
-        ...saveRes
+    if(uploadedPhotos.length === 0) {
+        throw new ApiError(500, "No photos were uploaded successfully");
     }
+
+    req.uploadData = uploadedPhotos
 
     next();
 })
@@ -129,6 +143,27 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Lab Manual ID is required!")
     }
 
+    const photos = await Photo.find({ typeId: labmanualId, type: "LabManual"})
+
+    if(photos.length > 0) {
+        const results = await Promise.all(
+            photos.map(async (photo) => {
+                if(photo.public_id) {
+                    try {
+                        await deleteItemOnCloudinary(photo.public_id)
+                    } catch (error) {
+                        console.error("Failed to delete photo on cloudinary!! Err:", error)
+                    }
+                }
+            })
+        )
+
+        const labmanualPhotos = await Photo.deleteMany({ typeId: labmanualId, type: "LabManual"})
+        if(labmanualPhotos.deletedCount === 0) {
+            throw new ApiError(500, "Failed to delete lab manual photos on database!!")
+        }
+    }
+
     const result = await LabManual.deleteOne({ _id: labmanualId })
 
     if (result.deletedCount === 0) {
@@ -136,10 +171,10 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
     }
 
     res
-    .status(200)
-    .json(
-        new ApiResponse(200, result, "Successfully delete lab manual!")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "Successfully delete lab manual!")
+        )
 })
 
 export {

@@ -8,8 +8,6 @@ import { ApiResponse } from "../utils/apiResponse.js"
 export const updateTracker = async (req, res, next) => {
     try {
         const uploads = req.uploadData
-        console.log("Uploadphotos=", req.uploadData);
-        
 
         if (!uploads || uploads.length === 0) {
             throw new ApiError(400, "No uploaded data found in updateTracker");

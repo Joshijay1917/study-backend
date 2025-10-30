@@ -3,7 +3,7 @@ import { ApiError } from "../utils/apiError.js"
 import { ApiResponse } from "../utils/apiResponse.js"
 import { Assignment } from "../models/assignment.models.js"
 import { Photo } from "../models/photo.models.js";
-import { uploadOnCloudinary } from '../utils/cloudinary.js'
+import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
 
 
 const getAllAssignment = asyncHandler(async (req, res) => {
@@ -62,44 +62,57 @@ const uploadAssignment = asyncHandler(async (req, res, next) => {
         throw new ApiError(400, "Assignment ID is required")
     }
 
-    if (!req.file) {
+    if (!req.files || req.files.length === 0) {
         throw new ApiError(400, "File not found")
     }
 
-    const localPath = req.file.path
-    if (!localPath) {
-        throw new ApiError(500, "File localpath not found")
-    }
-
     const assignment = await Assignment.findById(assignmentId)
-
     if (!assignment) {
         throw new ApiError(400, "Assignment not found")
     }
 
-    const photo = await uploadOnCloudinary(localPath);
+    const uploadedPhotos = []
 
-    if (!photo) {
-        throw new ApiError(500, "Cannot upload file")
-    }
+    const uploadPromises = req.files.map(async (file) => {
+        const localPath = file.path
+        if (!localPath) {
+            throw new ApiError(500, "File localpath not found")
+        }
 
-    const saveRes = await Photo.create({
-        name: photo.display_name,
-        subject: assignment.subject,
-        width: photo.width,
-        height: photo.height,
-        url: photo.url,
-        type: "Assignment",
-        typeId: assignment._id
+        const photo = await uploadOnCloudinary(localPath);
+        if (!photo) {
+            throw new ApiError(500, "Cannot upload file")
+        }
+
+        const saveRes = await Photo.create({
+            name: photo.display_name,
+            subject: assignment.subject,
+            width: photo.width,
+            height: photo.height,
+            url: photo.url,
+            public_id: photo.public_id,
+            type: "Assignment",
+            typeId: assignment._id
+        })
+
+        if (!saveRes) {
+            throw new ApiError(500, "Failed to save in database")
+        }
+
+        return saveRes;
     })
 
-    if (!saveRes) {
-        throw new ApiError(500, "Failed to save in database")
+    const results = await Promise.all(uploadPromises)
+
+    for (const r of results) {
+        if(r) uploadedPhotos.push(r)
     }
 
-    req.uploadData = {
-        ...saveRes
+    if(uploadedPhotos.length === 0) {
+        throw new ApiError(500, "No Photos were uploaded successfully!!");
     }
+
+    req.uploadData = uploadedPhotos
 
     next();
 })
@@ -137,17 +150,37 @@ const deleteAssignment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Assignment ID is required!")
     }
 
-    const result = await Assignment.deleteOne({ _id: assignmentId })
+    const photos = await Photo.find({ typeId: assignmentId, type: "Assignment" })
+    if(photos.length > 0) {
+        const results = await Promise.all(
+            photos.map(async (photo) => {
+                if(photo.public_id) {
+                    try {
+                        await deleteItemOnCloudinary(photo.public_id)
+                    } catch (error) {
+                        console.error("Failed to delete photo on cloudinary!! Err:", error)
+                    }
+                }
+            })
+        )
 
+        const assignmentPhotos = await Photo.deleteMany({ typeId: assignmentId, type: "Assignment"})
+        if(assignmentPhotos.deletedCount === 0) {
+            throw new ApiError(500, "Failed to delete photos in database!!")
+        }
+    }
+
+
+    const result = await Assignment.deleteOne({ _id: assignmentId })
     if (result.deletedCount === 0) {
         throw new ApiError(500, "Assignment not found!!")
     }
 
     res
-    .status(200)
-    .json(
-        new ApiResponse(200, result, "Successfully delete assignment!")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, result, "Successfully delete assignment!")
+        )
 })
 
 export {
