@@ -5,6 +5,7 @@ import { Note } from "../models/notes.models.js"
 import { Photo } from "../models/photo.models.js";
 import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
 import { LastUpdate } from "../models/lastUpdate.models.js";
+import { deleteService } from "../services/deleteService.js";
 
 const getAllNotes = asyncHandler(async (req, res) => {
     const { subjectId } = req.params
@@ -167,43 +168,16 @@ const deleteNote = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Notes ID is required!")
     }
 
-    const photos = await Photo.find({ typeId: notesId, type: "Note" })
-    if (photos.length > 0) {
-        await Promise.all(
-            photos.map(async (photo) => {
-                if (photo.public_id) {
-                    try {
-                        await deleteItemOnCloudinary(photo.public_id)
-                    } catch (error) {
-                        console.error(`Failed to delete photo on cloudinary!! Err:${error.message}`)
-                    }
-                }
-            })
-        )
-
-        const notePhotos = await Photo.deleteMany({ typeId: notesId, type: "Note" })
-        if (notePhotos.deletedCount === 0) {
-            throw new ApiError(500, "Failed to delete note photos!!")
-        }
-
-        const updateResult = await LastUpdate.updateMany(
-            {},
-            {
-                $pull: {
-                    notes: { typeId: notesId }
-                }
-            }
-        )
-
-        if(updateResult.modifiedCount === 0) {
-            console.warn("Notes - No matching LastUpdate entries found — maybe already cleaned up.");
-        }
+    try {
+        await deleteService(notesId, "Note")
+    } catch (error) {
+        console.error("DeleteService Error - ", error)
+        throw new ApiError(500, "Delete service failed!!")
     }
-
 
     const result = await Note.deleteOne({ _id: notesId })
     if (result.deletedCount === 0) {
-        throw new ApiError(500, "Note not found!!")
+        throw new ApiError(404, "Note not found!!")
     }
 
     res

@@ -1,4 +1,4 @@
-import { ApiError } from "./apiError.js"
+import { ApiError } from "../utils/apiError.js"
 import PDFDocument from "pdfkit";
 
 export const generatePdf = async (req, res) => {

@@ -5,6 +5,7 @@ import { Assignment } from "../models/assignment.models.js"
 import { Photo } from "../models/photo.models.js";
 import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
 import { LastUpdate } from "../models/lastUpdate.models.js";
+import { deleteService } from "../services/deleteService.js";
 
 
 const getAllAssignment = asyncHandler(async (req, res) => {
@@ -157,39 +158,12 @@ const deleteAssignment = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Assignment ID is required!")
     }
 
-    const photos = await Photo.find({ typeId: assignmentId, type: "Assignment" })
-    if (photos.length > 0) {
-        const results = await Promise.all(
-            photos.map(async (photo) => {
-                if (photo.public_id) {
-                    try {
-                        await deleteItemOnCloudinary(photo.public_id)
-                    } catch (error) {
-                        console.error("Failed to delete photo on cloudinary!! Err:", error)
-                    }
-                }
-            })
-        )
-
-        const assignmentPhotos = await Photo.deleteMany({ typeId: assignmentId, type: "Assignment" })
-        if (assignmentPhotos.deletedCount === 0) {
-            throw new ApiError(500, "Failed to delete photos in database!!")
-        }
-        
-        const updateResult = await LastUpdate.updateMany(
-            {},
-            {
-                $pull: {
-                    assignments: {typeId: assignmentId}
-                }
-            }
-        );
-
-        if (updateResult.modifiedCount === 0) {
-            console.warn("Assignment - No matching LastUpdate entries found — maybe already cleaned up.");
-        }
+    try {
+        await deleteService(assignmentId, "Assignment")
+    } catch (error) {
+        console.error("DeleteService Error - ", error)
+        throw new ApiError(500, "DeleteService failed!!")
     }
-
 
     const result = await Assignment.deleteOne({ _id: assignmentId })
     if (result.deletedCount === 0) {

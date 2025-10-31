@@ -5,6 +5,7 @@ import { LabManual } from "../models/labManual.models.js"
 import { Photo } from "../models/photo.models.js";
 import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
 import { LastUpdate } from "../models/lastUpdate.models.js";
+import { deleteService } from "../services/deleteService.js";
 
 const getAllLabmanuals = asyncHandler(async (req, res) => {
     const { subjectId } = req.params
@@ -150,38 +151,11 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Lab Manual ID is required!")
     }
 
-    const photos = await Photo.find({ typeId: labmanualId, type: "LabManual" })
-
-    if (photos.length > 0) {
-        const results = await Promise.all(
-            photos.map(async (photo) => {
-                if (photo.public_id) {
-                    try {
-                        await deleteItemOnCloudinary(photo.public_id)
-                    } catch (error) {
-                        console.error("Failed to delete photo on cloudinary!! Err:", error)
-                    }
-                }
-            })
-        )
-
-        const labmanualPhotos = await Photo.deleteMany({ typeId: labmanualId, type: "LabManual" })
-        if (labmanualPhotos.deletedCount === 0) {
-            throw new ApiError(500, "Failed to delete lab manual photos on database!!")
-        }
-
-        const updateResult = await LastUpdate.updateMany(
-            {},
-            {
-                $pull: {
-                    labmanual: { typeId: labmanualId }
-                }
-            }
-        )
-
-        if(updateResult.modifiedCount === 0) {
-            console.warn("LabManual - No matching LastUpdate entries found — maybe already cleaned up.")
-        }
+    try {
+        await deleteService(labmanualId, "LabManual")
+    } catch (error) {
+        console.error("DeleteService Error - ", error)
+        throw new ApiError(500, "DeleteService failed!!")
     }
 
     const result = await LabManual.deleteOne({ _id: labmanualId })
