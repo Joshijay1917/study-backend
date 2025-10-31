@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/apiResponse.js"
 import { LabManual } from "../models/labManual.models.js"
 import { Photo } from "../models/photo.models.js";
 import { deleteItemOnCloudinary, uploadOnCloudinary } from '../utils/cloudinary.js'
+import { LastUpdate } from "../models/lastUpdate.models.js";
 
 const getAllLabmanuals = asyncHandler(async (req, res) => {
     const { subjectId } = req.params
@@ -64,9 +65,7 @@ const uploadLab = asyncHandler(async (req, res, next) => {
         throw new ApiError("Sorry cannot find labmanual!!")
     }
 
-    const uploadedPhotos = []
-
-    const uploadPromises = req.files.map(async (file) => {
+    const uploadPromises = req.files.map(async (file, index) => {
         const localPath = file.path
         if (!localPath) {
             throw new ApiError(500, "File localpath not found")
@@ -76,6 +75,20 @@ const uploadLab = asyncHandler(async (req, res, next) => {
         if (!photo) {
             throw new ApiError(500, "Cannot upload file")
         }
+        
+        return { photo, index };
+    })
+    
+    const results = await Promise.all(uploadPromises)
+    
+    results.sort((a, b) => a.index - b.index);
+
+    const uploadedPhotos = []
+
+    for (const r of results) {
+        if (!r || !r.photo) continue;
+
+        const photo = r.photo;
 
         const saveRes = await Photo.create({
             name: photo.display_name,
@@ -87,18 +100,12 @@ const uploadLab = asyncHandler(async (req, res, next) => {
             type: "LabManual",
             typeId: labmanual._id
         })
-
+        
         if (!saveRes) {
             throw new ApiError(500, "Failed to save in database")
         }
 
-        return saveRes;
-    })
-
-    const results = await Promise.all(uploadPromises)
-
-    for (const r of results) {
-        if (r) uploadedPhotos.push(r)
+        uploadedPhotos.push(saveRes);
     }
 
     if (uploadedPhotos.length === 0) {
@@ -161,6 +168,19 @@ const deleteLabmanual = asyncHandler(async (req, res) => {
         const labmanualPhotos = await Photo.deleteMany({ typeId: labmanualId, type: "LabManual" })
         if (labmanualPhotos.deletedCount === 0) {
             throw new ApiError(500, "Failed to delete lab manual photos on database!!")
+        }
+
+        const updateResult = await LastUpdate.updateMany(
+            {},
+            {
+                $pull: {
+                    labmanual: { typeId: labmanualId }
+                }
+            }
+        )
+
+        if(updateResult.modifiedCount === 0) {
+            console.warn("LabManual - No matching LastUpdate entries found — maybe already cleaned up.")
         }
     }
 

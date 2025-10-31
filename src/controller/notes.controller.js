@@ -185,6 +185,19 @@ const deleteNote = asyncHandler(async (req, res) => {
         if (notePhotos.deletedCount === 0) {
             throw new ApiError(500, "Failed to delete note photos!!")
         }
+
+        const updateResult = await LastUpdate.updateMany(
+            {},
+            {
+                $pull: {
+                    notes: { typeId: notesId }
+                }
+            }
+        )
+
+        if(updateResult.modifiedCount === 0) {
+            console.warn("Notes - No matching LastUpdate entries found — maybe already cleaned up.");
+        }
     }
 
 
