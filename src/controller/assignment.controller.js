@@ -169,33 +169,35 @@ const deleteAssignment = asyncHandler(async (req, res) => {
         if (assignmentPhotos.deletedCount === 0) {
             throw new ApiError(500, "Failed to delete photos in database!!")
         }
+
+        const photoUrls = photos.map((p) => p.url);
+
+        const updateResult = await LastUpdate.updateMany(
+            {
+                $or: [
+                    { "notes.photos": { $in: photoUrls } },
+                    { "assignments.photos": { $in: photoUrls } },
+                    { "labmanual.photos": { $in: photoUrls } },
+                ]
+            },
+            {
+                $pull: {
+                    "notes.$[].photos": { $in: photoUrls },
+                    "assignments.$[].photos": { $in: photoUrls },
+                    "labmanual.$[].photos": { $in: photoUrls },
+                }
+            }
+        );
+
+        if (updateResult.modifiedCount === 0) {
+            console.warn("No matching LastUpdate entries found — maybe already cleaned up.");
+        }
     }
 
 
     const result = await Assignment.deleteOne({ _id: assignmentId })
     if (result.deletedCount === 0) {
         throw new ApiError(500, "Assignment not found!!")
-    }
-
-    const updateResult = await LastUpdate.updateMany(
-        {
-            $or: [
-                { "notes.photos": photo.url },
-                { "assignments.photos": photo.url },
-                { "labmanual.photos": photo.url },
-            ]
-        },
-        {
-            $pull: {
-                "notes.$[].photos": photo.url,
-                "assignments.$[].photos": photo.url,
-                "labmanual.$[].photos": photo.url,
-            }
-        }
-    )
-
-    if (updateResult.modifiedCount === 0) {
-        console.log("No matching LastUpdate entries found — maybe already cleaned up.");
     }
 
     res
