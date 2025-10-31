@@ -3,7 +3,7 @@ import { addNotes, uploadNotes, getAllNotes, getAllPhotos, deleteNote, deleteOne
 import { upload } from '../middleware/multer.middleware.js'
 import { verifyJwt } from "../middleware/auth.middleware.js";
 import { updateTracker } from "../middleware/update.middleware.js";
-import { generatePdf } from "../utils/generatePdf.js";
+import { generatePdf } from "../services/generatePdf.js";
 
 const router = Router()
 
