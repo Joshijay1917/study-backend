@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 
 const assSchema = new mongoose.Schema({
     number: {
-        type: Number,
+        type: String,
         required: true
     },
     deadline: {
