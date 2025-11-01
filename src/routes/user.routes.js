@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { currentUser, loginUser, refreshToken, registerUser } from "../controller/user.controller.js";
+import { currentUser, loginUser, refreshToken, registerUser, logoutUser } from "../controller/user.controller.js";
 import { verifyJwt } from "../middleware/auth.middleware.js";
 
 const router = Router()
@@ -9,5 +9,6 @@ router.route("/login").post(loginUser)
 router.route("/refresh-token").get(refreshToken)
 
 router.route("/curr-user").get(verifyJwt, currentUser)
+router.route("/logout").get(verifyJwt, logoutUser)
 
 export default router

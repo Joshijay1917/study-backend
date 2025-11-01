@@ -37,28 +37,28 @@ const registerUser = asyncHandler(async (req, res) => {
         "year": 2
     */
 
-    const {username, password, phone, email, sem, branch, year} = req.body
+    const { username, password, phone, email, sem, branch, year } = req.body
 
-    if(
+    if (
         [username, password, phone, email].forEach(f => f.value == '') ||
         [sem, branch, year].forEach(f => f.value == 0)
     ) {
         throw new ApiError(400, "Cannot get required fields!");
     }
 
-    if(!email.includes('@') || !email.includes('.')) {
+    if (!email.includes('@') || !email.includes('.')) {
         throw new ApiError(400, "Please Enter Valid Email");
     }
 
-    if(phone.length !== 10) {
+    if (phone.length !== 10) {
         throw new ApiError(400, "Please Enter Mobile no.");
     }
-    
+
     const existUser = await User.findOne({
-        $or: [{username}, {email}]
+        $or: [{ username }, { email }]
     })
 
-    if(existUser) {
+    if (existUser) {
         throw new ApiError("User already registered!!")
     }
 
@@ -72,33 +72,33 @@ const registerUser = asyncHandler(async (req, res) => {
         year
     })
 
-    if(!user) {
+    if (!user) {
         throw new ApiError(500, "Failed to register user!!")
     }
 
     res
-    .status(200)
-    .json(
-        new ApiResponse(200, user, "User registered successfully!!")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, user, "User registered successfully!!")
+        )
 })
 
 const loginUser = asyncHandler(async (req, res) => {
-    const {username, password} = req.body
+    const { username, password } = req.body
 
-    if(!username && !password) {
+    if (!username && !password) {
         throw new ApiError(400, "Username and password is required")
     }
 
-    const user = await User.findOne({username})
+    const user = await User.findOne({ username })
 
-    if(!user) {
+    if (!user) {
         throw new ApiError(400, "User does not exists")
     }
 
     const isPasswordValid = await user.comaprePassword(password)
 
-    if(!isPasswordValid) {
+    if (!isPasswordValid) {
         throw new ApiError(400, "Password is not valid");
     }
 
@@ -111,29 +111,29 @@ const loginUser = asyncHandler(async (req, res) => {
     }
 
     res
-    .status(200)
-    .cookie("accessToken", accessToken, options)
-    .cookie("refreshToken", refreshToken, options)
-    .json(
-        new ApiResponse(200, {user, accessToken, refreshToken}, "User LoggedIn Successfully")
-    )
+        .status(200)
+        .cookie("accessToken", accessToken, options)
+        .cookie("refreshToken", refreshToken, options)
+        .json(
+            new ApiResponse(200, { user, accessToken, refreshToken }, "User LoggedIn Successfully")
+        )
 })
 
 const currentUser = asyncHandler(async (req, res) => {
     res
-    .status(200)
-    .json(
-        new ApiResponse(200, req.user, "User get successfully")
-    )
+        .status(200)
+        .json(
+            new ApiResponse(200, req.user, "User get successfully")
+        )
 })
 
 const refreshToken = asyncHandler(async (req, res) => {
     const incomingRefreshToken = req.cookies.refreshToken
 
     console.log("Cookies=", req.cookies);
-    
 
-    if(!incomingRefreshToken) {
+
+    if (!incomingRefreshToken) {
         throw new ApiError(400, "Unauthorized request!!!")
     }
 
@@ -142,11 +142,11 @@ const refreshToken = asyncHandler(async (req, res) => {
 
         const user = await User.findById(decodedToken._id)
 
-        if(!user) {
+        if (!user) {
             throw new ApiError(401, "Invalid Refresh Token")
         }
 
-        if(incomingRefreshToken !== user.refresh_token) {
+        if (incomingRefreshToken !== user.refresh_token) {
             throw new ApiError(401, "RefreshToken is expired or used")
         }
 
@@ -159,14 +159,27 @@ const refreshToken = asyncHandler(async (req, res) => {
         const { refreshToken, accessToken } = await generateAccessRefreshTokens(decodedToken._id);
 
         res
-        .status(200)
-        .cookie("accessToken", accessToken, options)
-        .cookie("refreshToken", refreshToken, options)
-        .json(
-            new ApiResponse(200, {user, accessToken, refreshToken},"Tokens refreshed successfully")
-        )
+            .status(200)
+            .cookie("accessToken", accessToken, options)
+            .cookie("refreshToken", refreshToken, options)
+            .json(
+                new ApiResponse(200, { user, accessToken, refreshToken }, "Tokens refreshed successfully")
+            )
     } catch (error) {
         throw new ApiError(400, "Token is Invalid " + error)
+    }
+})
+
+const logoutUser = asyncHandler(async (req, res) => {
+    try {
+        res.clearCookie('accessToken', { httpOnly: true, secure: true });
+        res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+
+        return res.status(200).json(
+            new ApiResponse(200, {}, "Logged out successfully")
+        );
+    } catch (error) {
+        throw new ApiError(500, "Failed to logout user");
     }
 })
 
@@ -174,5 +187,6 @@ export {
     registerUser,
     loginUser,
     currentUser,
-    refreshToken
+    refreshToken,
+    logoutUser
 }
