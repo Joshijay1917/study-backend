@@ -9,6 +9,6 @@ router.route("/login").post(loginUser)
 router.route("/refresh-token").get(refreshToken)
 
 router.route("/curr-user").get(verifyJwt, currentUser)
-router.route("/logout").get(verifyJwt, logoutUser)
+router.route("/logout").post(verifyJwt, logoutUser)
 
 export default router

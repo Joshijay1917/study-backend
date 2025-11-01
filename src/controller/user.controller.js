@@ -171,16 +171,28 @@ const refreshToken = asyncHandler(async (req, res) => {
 })
 
 const logoutUser = asyncHandler(async (req, res) => {
-    try {
-        res.clearCookie('accessToken', { httpOnly: true, secure: true });
-        res.clearCookie('refreshToken', { httpOnly: true, secure: true });
+    const user = req.user;
 
-        return res.status(200).json(
-            new ApiResponse(200, {}, "Logged out successfully")
-        );
-    } catch (error) {
-        throw new ApiError(500, "Failed to logout user");
+    const existUser = await User.findById(user._id)
+    if(!existUser) {
+        throw new ApiError(400, "User does not exists!")
     }
+
+    existUser.refresh_token = null;
+    await existUser.save();
+
+    const options = {
+        httpOnly: true,
+        secure: true,
+        sameSite: 'none'
+    }
+
+    res.clearCookie('accessToken', options);
+    res.clearCookie('refreshToken', options);
+
+    return res.status(200).json(
+        new ApiResponse(200, {}, "Logged out successfully")
+    );
 })
 
 export {
